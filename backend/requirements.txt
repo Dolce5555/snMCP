@@ -1,0 +1,7 @@
+ruamel.yaml==0.18.16
+weaviate-client==4.18.1
+langchain==1.1.0
+langchain-core==1.1.0
+langchain_community==0.4.1
+langchain-openai==1.1.0
+langchain-weaviate==0.0.6

@@ -1,0 +1,7 @@
+model: /app/vllm/embedModels/embeddinggemma-300m
+served_model_name: embeddinggemma-300m
+runner: pooling
+host: 0.0.0.0
+port: 9000
+uvicorn-log-level: debug
+task: embed

@@ -1,0 +1,26 @@
+FROM rocm/vllm-dev:rocm6.4.2_navi_ubuntu24.04_py3.12_pytorch_2.7_vllm_0.9.2
+
+RUN sed -i 's/is_rocm = False/is_rocm = True/g' /opt/conda/envs/py_3.12/lib/python3.12/site-packages/vllm/platforms/__init__.py && /bin/bash
+RUN apt-get update && apt-get upgrade -y
+
+# FROM rocm/pytorch:rocm6.4.2_ubuntu24.04_py3.12_pytorch_release_2.6.0
+
+# RUN pip install triton==3.2.0
+# RUN git clone https://github.com/Dao-AILab/flash-attention.git
+
+# ENV FLASH_ATTENTION_TRITON_AMD_ENABLE="TRUE"
+# ENV GPU_ARCH="gfx1201"
+
+# RUN cd flash-attention &&\
+#     git submodule update --init &&\
+#     python setup.py install &&\
+#     cd ..
+
+# RUN git clone --recursive https://github.com/ROCm/aiter.git &&\
+#     cd aiter &&\
+#     git submodule sync; git submodule update --init --recursive &&\
+#     python3 setup.py develop &&\
+#     cd ..
+
+# ENV PYTORCH_ROM_ARCH="gfx1201"
+# RUN pip install vllm
