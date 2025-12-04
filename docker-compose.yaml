@@ -1,30 +1,29 @@
 services:
-  # vllm-gpu:
-  #   build: ./vllmGPU
-  #   container_name: vllmGPU
-  #   volumes:
-  #     - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so # for Radeon
-  #     - /opt/rocm/lib/libhsa-runtime64.so.1:/opt/rocm/lib/libhsa-runtime64.so.1 # for Radeon
-  #     - ./vllmGPU:/app/vllm
-  #   ipc: host
-  #   cap_add:
-  #     # - SYS_NICE
-  #     - SYS_PTRACE
-  #   security_opt:
-  #     - seccomp:unconfined
-  #   group_add:
-  #     - video
-  #   working_dir: /app/vllm
-  #   devices:
-  #     - /dev/dxg # for Radeon on WSL
-  #   env_file:
-  #     - ./__envs__/vllmGPU.env
-  #   # command: vllm serve --config ./gemma-3-1b.yaml
-  #   # command: vllm serve --config ./gemma-3n-E2B.yaml
-  #   # command: vllm serve --config ./embeddinggemma-300m.yaml
-  #   command: tail -f /dev/null
-  #   networks:
-  #     - llmApp
+  vllm-gpu:
+    build: ./vllmGPU
+    container_name: vllmGPU
+    volumes:
+      - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so # for Radeon
+      - /opt/rocm/lib/libhsa-runtime64.so.1:/opt/rocm/lib/libhsa-runtime64.so.1 # for Radeon
+      - ./vllmGPU:/app/vllm
+    ipc: host
+    cap_add:
+      # - SYS_NICE
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    group_add:
+      - video
+    working_dir: /app/vllm
+    devices:
+      - /dev/dxg # for Radeon on WSL
+    env_file:
+      - ./__envs__/vllmGPU.env
+    command: vllm serve --config /app/vllm/configs/gemma-3-1b.yaml
+    # command: vllm serve --config ./gemma-3n-E2B.yaml
+    # command: tail -f /dev/null
+    networks:
+      - llmApp
   vllm-cpu:
     build: ./vllmCPU
     container_name: vllmCPU
