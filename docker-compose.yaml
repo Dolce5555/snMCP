@@ -1,29 +1,44 @@
 services:
-  vllm-gpu:
-    build: ./vllmGPU
-    container_name: vllmGPU
-    volumes:
-      - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so # for Radeon
-      - /opt/rocm/lib/libhsa-runtime64.so.1:/opt/rocm/lib/libhsa-runtime64.so.1 # for Radeon
-      - ./vllmGPU:/app/vllm
-    ipc: host
-    cap_add:
-      # - SYS_NICE
-      - SYS_PTRACE
-    security_opt:
-      - seccomp:unconfined
-    group_add:
-      - video
-    working_dir: /app/vllm
-    devices:
-      - /dev/dxg # for Radeon on WSL
-    env_file:
-      - ./__envs__/vllmGPU.env
-    command: vllm serve --config /app/vllm/configs/gemma-3-1b.yaml
-    # command: vllm serve --config ./gemma-3n-E2B.yaml
-    # command: tail -f /dev/null
-    networks:
-      - llmApp
+  # vllm-gpu:
+  #   build: ./vllmGPU
+  #   container_name: vllmGPU
+  #   volumes:
+  #     - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so # for Radeon
+  #     - /opt/rocm/lib/libhsa-runtime64.so.1:/opt/rocm/lib/libhsa-runtime64.so.1 # for Radeon
+  #     - ./vllmGPU:/app/vllm
+  #   ipc: host
+  #   cap_add:
+  #     # - SYS_NICE
+  #     - SYS_PTRACE
+  #   security_opt:
+  #     - seccomp:unconfined
+  #   group_add:
+  #     - video
+  #   working_dir: /app/vllm
+  #   devices:
+  #     - /dev/dxg # for Radeon on WSL
+  #   env_file:
+  #     - ./__envs__/vllmGPU.env
+  #   command: vllm serve --config /app/vllm/configs/gemma-3-1b.yaml
+  #   # command: vllm serve --config ./gemma-3n-E2B.yaml
+  #   # command: tail -f /dev/null
+  #   networks:
+  #     - llmApp
+
+  # aired:
+  #   build: ./aired
+  #   container_name: aired
+  #   volumes:
+  #     - ./aired/data:/app/data
+  #     - ./aired/src:/app/src
+  #   environment:
+  #     TZ: Asia/Tokyo
+  #   depends_on:
+  #     - vllm-gpu
+  #   networks:
+  #     - llmApp
+  #   command: tail -F /dev/null
+
   vllm-cpu:
     build: ./vllmCPU
     container_name: vllmCPU
@@ -36,6 +51,7 @@ services:
     command: vllm serve --config /app/vllm/embedModels/configs/embeddinggemma-300m.yaml
     networks:
       - llmApp
+
   weaviate:
     build: ./weaviate
     container_name: weaviate
@@ -47,6 +63,7 @@ services:
       - ./__envs__/weaviate.env
     networks:
       - llmApp
+  
   backend:
     build: ./backend
     container_name: backend

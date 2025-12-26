@@ -52,20 +52,20 @@ try:
         ),
     )
 
-    # Insert data objects
-    test_collection = client.collections.use("test")
-    # with test_collection.batch.fixed_size(batch_size=200) as batch:
-    with test_collection.batch.dynamic() as batch:
-        for obj in data_objects:
-            batch.add_object(properties = obj)
-    print(len(test_collection))
+    # # Insert data objects
+    # test_collection = client.collections.use("test")
+    # # with test_collection.batch.fixed_size(batch_size=200) as batch:
+    # with test_collection.batch.dynamic() as batch:
+    #     for obj in data_objects:
+    #         batch.add_object(properties = obj)
+    # print(len(test_collection))
     
-    response = test_collection.query.near_text(
-        query = "boy",
-        limit = 4,
-        return_metadata = MetadataQuery(distance=True, certainty=True, score=True, explain_score=True)
-    )
-    for obj in response.objects:
-        print(obj)
+    # response = test_collection.query.near_text(
+    #     query = "boy",
+    #     limit = 4,
+    #     return_metadata = MetadataQuery(distance=True, certainty=True, score=True, explain_score=True)
+    # )
+    # for obj in response.objects:
+    #     print(obj)
 finally:
     client.close()
