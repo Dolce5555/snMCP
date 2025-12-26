@@ -5,9 +5,15 @@ from langchain_core.vectorstores import InMemoryVectorStore
 
 class VLLMManager:
     def __init__(self, sys_prompt: str = "あなたは有能なアシスタントです。"):
-        self.model = init_chat_model(
+        self.gpu_model = init_chat_model(
             model = "google/gemma-3-1b-it",
             base_url = "http://vllmGPU:9000/v1",
+            model_provider = "openai",
+            api_key = "EMPTY",
+        )
+        self.cpu_model = init_chat_model(
+            model = "<your model name>",
+            base_url = "http://vllmCPU:<your model port>/v1",
             model_provider = "openai",
             api_key = "EMPTY",
         )
@@ -24,13 +30,21 @@ class VLLMManager:
             HumanMessage(content=usr_prompt)
         ]
         return messages
+    
+    def invoke(self, usr_prompt: str, model_server: str = "cpu"):
+        if model_server == "cpu":
+            model = self.cpu_model
+        elif model_server == "gpu":
+            model = self.gpu_model
+        elif model_server == "embed":
+            model = self.embed_model
+        else:
+            raise ValueError("model_server must be 'cpu' or 'gpu' or 'embed'")
+        response = model.invoke(self.prompt_template(usr_prompt))
+        return response
 
 if __name__ == "__main__":
     vllm_manager = VLLMManager()
     usr_prompt = "こんにちは、元気ですか？"
-    text = "LangChain is the framework for building context-aware reasoning applications"
-
-    # messages = vllm_manager.prompt_template(usr_prompt)
-    # response = vllm_manager.model.generate(messages)
-    response = vllm_manager.embed_model.embed_query("hello")
-    print(response[:5])
+    response = vllm_manager.invoke(usr_prompt=usr_prompt)
+    print(response)

@@ -19,7 +19,8 @@ mcpServer/
 deepeval/
 
 # 重い、不必要なデータは排除
-vllmCPU/embedModels/embeddinggemma-300m/
+vllmCPU/embedModels/
+vllmCPU/models/
 vllmGPU/models/
 
 ##################################################
