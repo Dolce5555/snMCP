@@ -8,7 +8,7 @@
 backend/ragOriginalData/
 
 # サンプルファイルは含める
-!__envs__/samples/.env
+!__envs__/samples/*.env
 
 # DBファイルを排除
 weaviate/data/
