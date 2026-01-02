@@ -4,7 +4,8 @@
 
 # 機密情報を含むファイル・ディレクトリを排除
 *.env
-*secrets.yaml
+*.yaml
+!example.yaml
 backend/ragOriginalData/
 
 # サンプルファイルは含める
