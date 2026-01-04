@@ -1,7 +1,6 @@
 from langchain.chat_models import init_chat_model
 from langchain_openai import OpenAIEmbeddings
 from langchain.messages import HumanMessage, SystemMessage, AIMessage
-from langchain_core.vectorstores import InMemoryVectorStore
 
 class VLLMManager:
     def __init__(self, sys_prompt: str = "あなたは有能なアシスタントです。"):
