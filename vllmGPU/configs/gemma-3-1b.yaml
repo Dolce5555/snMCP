@@ -1,9 +1,0 @@
-# model: google/gemma-3-1b-it
-# trust_remote-code: true
-model: /app/vllm/models/gemma-3-1b-it
-served_model_name: gemma-3-1b
-host: 0.0.0.0
-port: 9000
-gpu-memory-utilization: 0.35
-api-key: key-generator
-# download-dir: /app/vllm/models

@@ -1,7 +1,0 @@
-model: google/gemma-3n-E2B-it
-trust_remote-code: true
-host: 0.0.0.0
-port: 9000
-gpu-memory-utilization: 0.7
-# uvicorn-log-level: info
-download-dir: /app/vllm/models
