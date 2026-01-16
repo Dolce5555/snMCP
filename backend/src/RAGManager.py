@@ -2,6 +2,7 @@ import os
 import time
 import weaviate
 import logging
+from ruamel.yaml import YAML
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions, RapidOcrOptions, TableFormerMode
@@ -79,8 +80,19 @@ class WeaviateRAGSearcher(WeaviateManageBase):
             self.collection = None
 
     def contextSearch(self, query: str, method: str = "semantic"):
+        result = ""
         if method == "semantic":
             self.logger.info("semantic searchを実行します。")
+            response = self.collection.query.near_text(
+                query = query,
+                limit = 4,
+                return_metadata = MetadataQuery(
+                    distance = True,
+                )
+            )
+            for i, obj in enumerate(response.objects):
+                # result += f"{obj.properties.metadata}: [contents: {obj.properties.page_content}, distance: {obj.metadata.distance}]\n"
+                result += f"No.{i + 1}: [properties: {obj.properties}, distance: {obj.metadata.distance}]\n"
             return result
         elif method == "keyword":
             self.logger.info("keyword searchを実行します。")
@@ -218,10 +230,14 @@ if __name__ == "__main__":
     with open(filePath, "r", encoding="utf-8") as f:
         secrets = yaml.load(f)
     
-    dirPath = "/app/backend/ragOriginalData/"
-    fileName = "1593194_名倉様_持込品に関する注意事項.pdf"
-    filePath = dirPath + fileName
-    
-    wdm = WeaviateDocumentManager(secrets, "test")
+    # dirPath = "/app/backend/ragOriginalData/"
+    # fileName = "1593194_名倉様_持込品に関する注意事項.pdf"
+    # filePath = dirPath + fileName
+
+    # wdm = WeaviateDocumentManager(secrets, "test")
     # wdm.insertObject(filePath)
-    wdm.readObjects(fileName)
+    # wdm.readObjects(fileName)
+
+    wrs = WeaviateRAGSearcher(secrets, "test")
+    result = wrs.contextSearch("アニメ")
+    print(result)
