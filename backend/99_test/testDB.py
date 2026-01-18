@@ -29,7 +29,6 @@ try:
         auth_credentials=Auth.api_key(secrets["weaviate"]["apiKey"]["user-a"]),
         headers = {
             "X-OpenAI-Api-Key": secrets["embeddingModel"]["apiKey"],
-        #     "X-OpenAI-Baseurl": f"http://{model_host}:9000/v1/embeddings",
             # "X-OpenAI-Baseurl": f"http://{model_host}:9000",
         }
     )
