@@ -5,17 +5,17 @@ from langchain.messages import HumanMessage, SystemMessage, AIMessage
 class VLLMManager:
     def __init__(self, sys_prompt: str = "あなたは有能なアシスタントです。"):
         self.gpu_model = init_chat_model(
-            model = "google/gemma-3-1b-it",
+            model = "gemma-3-1b-it",
             base_url = "http://vllmGPU:9000/v1",
             model_provider = "openai",
             api_key = "EMPTY",
         )
-        self.cpu_model = init_chat_model(
-            model = "<your model name>",
-            base_url = "http://vllmCPU:<your model port>/v1",
-            model_provider = "openai",
-            api_key = "EMPTY",
-        )
+        # self.cpu_model = init_chat_model(
+        #     model = "<your model name>",
+        #     base_url = "http://vllmCPU:<your model port>/v1",
+        #     model_provider = "openai",
+        #     api_key = "EMPTY",
+        # )
         self.embed_model = OpenAIEmbeddings(
             model = "embeddinggemma-300m",
             base_url = "http://vllmCPU:9000/v1",
@@ -30,7 +30,7 @@ class VLLMManager:
         ]
         return messages
     
-    def invoke(self, usr_prompt: str, model_server: str = "cpu"):
+    def invoke(self, usr_prompt: str, model_server: str = "gpu"):
         if model_server == "cpu":
             model = self.cpu_model
         elif model_server == "gpu":
