@@ -23,6 +23,7 @@ deepeval/
 vllmCPU/embedModels/
 vllmCPU/models/
 vllmGPU/models/
+*.log
 
 ##################################################
 
