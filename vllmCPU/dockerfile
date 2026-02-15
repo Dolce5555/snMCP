@@ -1,1 +1,1 @@
-FROM public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo:v0.13.0
+FROM public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo:v0.16.0

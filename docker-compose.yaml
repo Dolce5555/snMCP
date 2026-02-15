@@ -34,9 +34,8 @@ services:
     shm_size: '1gb'
     env_file:
       - ./__envs__/vllmCPU.env
-    # command: vllm serve --config /app/vllm/configs/gemma-3-1b.yaml
     command: --config /app/vllm/configs/embeddinggemma-300m.yaml
-    # command: tail -f /dev/null
+    # entrypoint: tail -f /dev/null
     networks:
       - llmApp
 
@@ -63,10 +62,9 @@ services:
     tty: true
     networks:
       - llmApp
-
-# secrets:
-#   weaviate_apikey:
-#     file: ./weaviate/weaviate_apikey.txt
+  # secrets:
+  #   weaviate_apikey:
+  #     file: ./weaviate/weaviate_apikey.txt
 
 networks:
   llmApp:
