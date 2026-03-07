@@ -1,6 +1,7 @@
 from WeaviateManager import WeaviateRAGSearcher, WeaviateCollectionManager, WeaviateDocumentManager
 from ruamel.yaml import YAML
 from LLMManager import LLMManager
+from RAGPipeline import RAGPipeline
 
 if __name__ == "__main__":
     ## secret情報（api-keyや接続先など）をyamlから取得
@@ -17,6 +18,8 @@ if __name__ == "__main__":
     # # wdm.insertObject(filePath)
     # wdm.readObjects(fileName)
 
-    llm = LLMManager("vllm", secrets)
-    print(llm.manager.invoke("あなたは何を手伝ってくれますか？"))
-    
+    # llm = LLMManager("vllm", secrets)
+    # print(llm.manager.invoke("あなたは何を手伝ってくれますか？"))
+    ragPipeline = RAGPipeline(secrets, logger, "タキシード 持ち込み費用", mode="simple")
+    ragPipeline.run()
+    print(ragPipeline.generated_response)
