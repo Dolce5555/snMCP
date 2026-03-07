@@ -20,8 +20,10 @@ services:
     env_file:
       - ./__envs__/vllmGPU.env
     command: vllm serve --config /app/vllm/configs/gemma-3-1b.yaml
-    # command: vllm serve --config ./gemma-3n-E2B.yaml
+    # command: vllm serve --config /app/vllm/configs/gemma-3n-E2B.yaml
     # command: tail -f /dev/null
+    # command: bash kickVllm.sh
+    # entrypoint: tail -f /dev/null
     networks:
       - llmApp
 

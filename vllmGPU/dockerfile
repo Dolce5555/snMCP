@@ -1,6 +1,14 @@
-FROM rocm/vllm-dev:rocm6.4.2_navi_ubuntu24.04_py3.12_pytorch_2.7_vllm_0.9.2
+########## wsl版の旧バージョン
+# FROM rocm/vllm-dev:rocm6.4.2_navi_ubuntu24.04_py3.12_pytorch_2.7_vllm_0.9.2
+# RUN sed -i 's/is_rocm = False/is_rocm = True/g' /opt/conda/envs/py_3.12/lib/python3.12/site-packages/vllm/platforms/__init__.py && /bin/bash
+########## wsl版のrocm7系
+# FROM rocm/vllm-dev:rocm7.1.1_navi_ubuntu24.04_py3.12_pytorch_2.8_vllm_0.10.2rc1
+FROM rocm/vllm-dev:rocm7.2_navi_ubuntu24.04_py3.12_pytorch_2.9_vllm_0.14.0rc0
+RUN sed -i 's/is_rocm = False/is_rocm = True/g' /opt/venv/lib/python3.12/site-packages/vllm/platforms/__init__.py && /bin/bash
+########## linuxベースの最新版 
+# FROM vllm/vllm-openai-rocm:nightly
+##########
 
-RUN sed -i 's/is_rocm = False/is_rocm = True/g' /opt/conda/envs/py_3.12/lib/python3.12/site-packages/vllm/platforms/__init__.py && /bin/bash
 RUN apt-get update && apt-get upgrade -y
 
 # FROM rocm/pytorch:rocm6.4.2_ubuntu24.04_py3.12_pytorch_release_2.6.0

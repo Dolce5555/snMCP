@@ -21,7 +21,7 @@ class WeaviateManageBase:
         self.secrets = secrets
         
         # 外部からロガーが渡されなければモジュールロガーを作成
-        self.logger = logger or self.getLogger(__name__, logLevel)
+        self.logger = logger or self.getLogger(f"{__file__.split("/")[-1]}_{self.__class__.__name__}", logLevel)
         
         self.client = weaviate.connect_to_local(
             host = secrets["weaviate"]["host"],
@@ -48,7 +48,7 @@ class WeaviateManageBase:
             self.client.close()
 
 
-    def getLogger(self, name: str = __name__, logLevel: int = logging.INFO) -> logging.Logger:
+    def getLogger(self, name: str, logLevel: int = logging.INFO) -> logging.Logger:
         """
         シンプルなロガー初期化ヘルパー。
         アプリ側でハンドラを既に設定している場合は干渉しない。
@@ -122,6 +122,25 @@ class WeaviateCollectionManager(WeaviateManageBase):
                 name = f"{collectionName}_vector",
             ),
         )
+        self.logger.info(f"コレクションを作成しました。")
+        self.logger.info(f"現在のコレクションは、下記のものがあります。\n{self.readCollection()}")
+    
+
+    def readCollection(self):
+        collections = list(self.client.collections.list_all().keys())
+        self.logger.info(f"現在のコレクションは、下記のものがあります。\n{collections}")
+
+
+    def deleteCollection(self, collectionName: str = None, option: str = "one"):
+        if option == "one":
+            self.client.collections.delete(collectionName)
+            self.logger.info(f"コレクションを削除しました。")
+        elif option == "all":
+            self.client.collections.delete_all()
+            self.logger.info(f"コレクションを削除しました。")
+        else:
+            self.logger.error(f"不明なオプションが指定されました: {option}")
+        self.logger.info(f"現在のコレクションは、下記のものがあります。\n{self.readCollection()}")
 
 
 ##########
@@ -135,7 +154,7 @@ class WeaviateDocumentManager(WeaviateManageBase):
         self.logger.info(f"コレクションの接続に成功しました: {collectionName}")
 
 
-    def insertObject(self, filePath: str, chunkSize: int = 250, chunkOverlap: int = 100):
+    def insertObject(self, filePath: str, chunkSize: int = 1000, chunkOverlap: int = 200):
         # doclingでpdfをmd形式に変換
         mdDoc = self.formatMd(filePath)
         fileName = filePath.split("\\")[-1]
@@ -184,10 +203,6 @@ class WeaviateDocumentManager(WeaviateManageBase):
 
 
     def splitDoc(self, mdDoc, chunkSize: int, chunkOverlap: int):
-        # doclingでpdfをmd形式に変換
-        mdDoc = self.formatMd(filePath)
-        fileName = filePath.split("\\")[-1]
-
         ## md形式の文書を分割する
         # md形式のヘッダ情報で分割ポイントを設定
         headers2SplitOn = [
@@ -230,14 +245,19 @@ if __name__ == "__main__":
     with open(filePath, "r", encoding="utf-8") as f:
         secrets = yaml.load(f)
     
+    # wcm = WeaviateCollectionManager(secrets)
+    # wcm.createCollection("mariage_docs")
+    # wcm.readCollection()
+    # wcm.deleteCollection("mariage_docs")
+    
     # dirPath = "/app/backend/ragOriginalData/"
     # fileName = "1593194_名倉様_持込品に関する注意事項.pdf"
     # filePath = dirPath + fileName
 
-    # wdm = WeaviateDocumentManager(secrets, "test")
+    # wdm = WeaviateDocumentManager(secrets, "mariage_docs")
     # wdm.insertObject(filePath)
     # wdm.readObjects(fileName)
 
-    wrs = WeaviateRAGSearcher(secrets, "test")
-    result = wrs.contextSearch("アニメ")
+    wrs = WeaviateRAGSearcher(secrets, "mariage_docs")
+    result = wrs.contextSearch("タキシードの持ち込み費用はいくらかかりますか？")
     print(result)

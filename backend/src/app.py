@@ -1,6 +1,6 @@
-from RAGManager import WeaviateRAGSearcher, WeaviateCollectionManager, WeaviateDocumentManager
+from WeaviateManager import WeaviateRAGSearcher, WeaviateCollectionManager, WeaviateDocumentManager
 from ruamel.yaml import YAML
-from LLMManager import VLLMManager
+from LLMManager import LLMManager
 
 if __name__ == "__main__":
     ## secret情報（api-keyや接続先など）をyamlから取得
@@ -17,6 +17,6 @@ if __name__ == "__main__":
     # # wdm.insertObject(filePath)
     # wdm.readObjects(fileName)
 
-    llm = VLLMManager(secrets)
-    print(llm.invoke("あなたは何を手伝ってくれますか？"))
+    llm = LLMManager("vllm", secrets)
+    print(llm.manager.invoke("あなたは何を手伝ってくれますか？"))
     
