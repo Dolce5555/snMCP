@@ -19,7 +19,9 @@ services:
       - /dev/dxg # for Radeon on WSL
     env_file:
       - ./__envs__/vllmGPU.env
+    # command: vllm serve --config /app/vllm/configs/phi-4-mini.yaml
     command: vllm serve --config /app/vllm/configs/gemma-3-1b.yaml
+    # command: vllm serve --config /app/vllm/configs/functiongemma.yaml
     # command: vllm serve --config /app/vllm/configs/gemma-3n-E2B.yaml
     # command: tail -f /dev/null
     # command: bash kickVllm.sh
@@ -37,6 +39,7 @@ services:
     env_file:
       - ./__envs__/vllmCPU.env
     command: --config /app/vllm/configs/embeddinggemma-300m.yaml
+    # command: --config /app/vllm/configs/functiongemma.yaml
     # entrypoint: tail -f /dev/null
     networks:
       - llmApp
@@ -58,7 +61,7 @@ services:
     container_name: backend
     volumes:
       - ./backend:/app/backend
-    working_dir: /app/backend
+    working_dir: /app/backend/src
     env_file:
       - ./__envs__/backend.env
     tty: true

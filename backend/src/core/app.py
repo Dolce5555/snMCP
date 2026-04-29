@@ -3,7 +3,7 @@ from ruamel.yaml import YAML
 from LLMManager import LLMManager
 from RAGPipeline import RAGPipeline
 import logging
-
+print("app.pyが読み込まれました")
 if __name__ == "__main__":
     ## secret情報（api-keyや接続先など）をyamlから取得
     filePath = "/app/backend/secrets.yaml"
@@ -36,7 +36,11 @@ if __name__ == "__main__":
         """\
         今、ワタベウェディングで結婚式を挙げようと考えています。\n\
         もし、タキシードを持ち込もうと考えているのですが、持ち込みにかかる費用について教えてください。""",
-        mode="raw"
+        mode="raw",
+        pipeline_kind="agent"
+        # pipeline_kind="2steps"
     )
     ragPipeline.run()
+    # collections = ragPipeline.ragSearcher.client.collections.list_all() # 脱獄用
+    # print(collections) # 脱獄用
     # print(f"\n\n実際にユーザに返すレスポンス内容\n{ragPipeline.generated_response}")
