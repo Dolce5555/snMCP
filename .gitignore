@@ -20,10 +20,10 @@ mcpServer/
 deepeval/
 
 # 重い、不必要なデータは排除
-vllmCPU/embedModels/
 vllmCPU/models/
 vllmGPU/models/
 *.log
+backend/img/
 
 ##################################################
 

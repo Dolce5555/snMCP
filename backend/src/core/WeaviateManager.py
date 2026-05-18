@@ -245,18 +245,18 @@ if __name__ == "__main__":
     with open(filePath, "r", encoding="utf-8") as f:
         secrets = yaml.load(f)
     
-    # wcm = WeaviateCollectionManager(secrets)
-    # wcm.createCollection("mariage_docs")
-    # wcm.readCollection()
-    # wcm.deleteCollection("mariage_docs")
+    wcm = WeaviateCollectionManager(secrets)
+    wcm.deleteCollection("mariage_docs")
+    wcm.createCollection("mariage_docs")
+    wcm.readCollection()
     
-    # dirPath = "/app/backend/ragOriginalData/"
-    # fileName = "1593194_名倉様_持込品に関する注意事項.pdf"
-    # filePath = dirPath + fileName
+    dirPath = "/app/backend/ragOriginalData/"
+    fileName = "1593194_名倉様_持込品に関する注意事項.pdf"
+    filePath = dirPath + fileName
 
-    # wdm = WeaviateDocumentManager(secrets, "mariage_docs")
-    # wdm.insertObject(filePath)
-    # wdm.readObjects(fileName)
+    wdm = WeaviateDocumentManager(secrets, "mariage_docs")
+    wdm.insertObject(filePath)
+    wdm.readObjects(fileName)
 
     wrs = WeaviateRAGSearcher(secrets, "mariage_docs")
     result = wrs.contextSearch("タキシードの持ち込み費用はいくらかかりますか？")

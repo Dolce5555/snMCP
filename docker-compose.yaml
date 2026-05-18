@@ -3,8 +3,8 @@ services:
     build: ./vllmGPU
     container_name: vllmGPU
     volumes:
-      - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so # for Radeon
-      - /opt/rocm/lib/libhsa-runtime64.so.1:/opt/rocm/lib/libhsa-runtime64.so.1 # for Radeon
+      # - /usr/lib/wsl/lib/libdxcore.so:/usr/lib/libdxcore.so # for Radeon
+      # - /opt/rocm/lib/libhsa-runtime64.so.1:/opt/rocm/lib/libhsa-runtime64.so.1 # for Radeon
       - ./vllmGPU:/app/vllm
     ipc: host
     cap_add:
@@ -16,45 +16,45 @@ services:
       - video
     working_dir: /app/vllm
     devices:
-      - /dev/dxg # for Radeon on WSL
+      # - /dev/dxg # for Radeon on WSL
+      - /dev/kfd
+      - /dev/dri
     env_file:
       - ./__envs__/vllmGPU.env
-    # command: vllm serve --config /app/vllm/configs/phi-4-mini.yaml
-    command: vllm serve --config /app/vllm/configs/gemma-3-1b.yaml
-    # command: vllm serve --config /app/vllm/configs/functiongemma.yaml
+    # command: vllm serve --config /app/vllm/configs/gemma-3-1b.yaml
     # command: vllm serve --config /app/vllm/configs/gemma-3n-E2B.yaml
-    # command: tail -f /dev/null
     # command: bash kickVllm.sh
     # entrypoint: tail -f /dev/null
+    entrypoint: vllm serve --config /app/vllm/configs/gemma4.yaml
     networks:
       - llmApp
 
-  vllm-cpu:
-    build: ./vllmCPU
-    container_name: vllmCPU
-    volumes:
-      - ./vllmCPU:/app/vllm
-    working_dir: /app/vllm
-    shm_size: '1gb'
-    env_file:
-      - ./__envs__/vllmCPU.env
-    command: --config /app/vllm/configs/embeddinggemma-300m.yaml
-    # command: --config /app/vllm/configs/functiongemma.yaml
-    # entrypoint: tail -f /dev/null
-    networks:
-      - llmApp
+  # vllm-cpu:
+  #   build: ./vllmCPU
+  #   container_name: vllmCPU
+  #   volumes:
+  #     - ./vllmCPU:/app/vllm
+  #   working_dir: /app/vllm
+  #   shm_size: '1gb'
+  #   env_file:
+  #     - ./__envs__/vllmCPU.env
+  #   command: --config /app/vllm/configs/embeddinggemma.yaml
+  #   # command: --config /app/vllm/configs/functiongemma.yaml
+  #   # entrypoint: tail -f /dev/null
+  #   networks:
+  #     - llmApp
 
-  weaviate:
-    build: ./weaviate
-    container_name: weaviate
-    volumes:
-      - ./weaviate/data:/app/weaviate/data
-    working_dir: /app/weaviate/data
-    restart: on-failure:0
-    env_file:
-      - ./__envs__/weaviate.env
-    networks:
-      - llmApp
+  # weaviate:
+  #   build: ./weaviate
+  #   container_name: weaviate
+  #   volumes:
+  #     - ./weaviate/data:/app/weaviate/data
+  #   working_dir: /app/weaviate/data
+  #   restart: on-failure:0
+  #   env_file:
+  #     - ./__envs__/weaviate.env
+  #   networks:
+  #     - llmApp
 
   backend:
     build: ./backend

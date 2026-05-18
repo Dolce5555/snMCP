@@ -5,10 +5,10 @@ from langchain.messages import HumanMessage, SystemMessage, AIMessage
 class VLLMManager:
     def __init__(self, sys_prompt: str = "あなたは有能なアシスタントです。"):
         self.gpu_model = init_chat_model(
-            model = "gemma-3-1b",
+            model = "gemma-4-E2B",
             base_url = "http://vllmGPU:9000/v1",
             model_provider = "openai",
-            api_key = "key-generator",
+            api_key = "base-123456-key",
         )
         # self.cpu_model = init_chat_model(
         #     model = "<your model name>",

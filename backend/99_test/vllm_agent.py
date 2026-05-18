@@ -1,4 +1,4 @@
-from langchain.tools import tool
+from langchain_core.tools import StructuredTool
 from langchain.chat_models import init_chat_model
 from langchain.messages import AnyMessage, SystemMessage, ToolMessage, HumanMessage
 from langgraph.graph import StateGraph, START, END
@@ -8,6 +8,11 @@ from typing_extensions import TypedDict, Annotated
 import operator
 from IPython.display import Image, display
 from pydantic import BaseModel, Field
+
+"""
+OpenAI APIのMessagesの構造
+
+"""
 
 ## secret情報の取得
 filePath = "/app/backend/secrets.yaml"
@@ -32,164 +37,128 @@ class searchInput(BaseModel):
         description="検索するためのクエリ"
     )
 
+class StateMethod(TypedDict):
+    messages: Annotated[list[AnyMessage], operator.add]
+    llm_calls: int
 
-def weather(query: str) -> str:
-    """
-    地名を受け取り、その場所の天気を検索するツール
-
-    Args:
-        query: 天気を検索するためのクエリ
-    Returns:
-        検索結果のテキスト
-    """
-    return "晴れ"
-
-
-
-# class searchInput(BaseModel):
-#     """インプット情報の定義"""
-#     a: int = Field(
-#         description="First int"
-#     )
-#     b: int = Field(
-#         description="Second int"
-#     )
-
-# # Define tools
-# @tool("multiply", args_schema=searchInput, return_direct=True, description = "Return the product of 2 integers `a` and `b`.")
-# def multiply(a: int, b: int) -> int:
-#     """Multiply `a` and `b`.
-
-#     Args:
-#         a: First int
-#         b: Second int
-#     """
-#     return a * b
-
-
-# @tool("add", args_schema=searchInput, return_direct=True)
-# def add(a: int, b: int) -> int:
-#     """Adds `a` and `b`.
-
-#     Args:
-#         a: First int
-#         b: Second int
-#     """
-#     return a + b
+class snAgent():
+    def __init__(self):
+        # tool を使えるように model を定義
+        self.model = model
+        
+        # selfがバインドされたメソッドをToolとして登録する
+        weather_tool = StructuredTool.from_function(
+            func=self.weather,
+            name="weather",
+            description="{query} の天気を回答する",
+            args_schema=searchInput
+        )
+        
+        tools = [weather_tool]
+        ## toolの名前でtoolを取得できるようにする {"tool_name": tool_instance, ...}
+        self.tools_by_name = {tool.name: tool for tool in tools}
+        self.model_with_tools = model.bind_tools(tools)
+        # LangGraphのagentを定義
+        self.agent_builder = StateGraph(StateMethod)
+        self.agent_builder.add_node("llm_call", self.llm_call)
+        self.agent_builder.add_node("tool_node", self.tool_node)
+        self.agent_builder.add_edge(START, "llm_call")
+        self.agent_builder.add_conditional_edges(
+            "llm_call",
+            self.should_continue,
+            ["tool_node", END]# should_continueがtool_nodeかENDを返す
+        )
+        self.agent_builder.add_edge("tool_node", "llm_call")
+        self.agent = self.agent_builder.compile()
+        self.agent.get_graph(xray=True).draw_mermaid_png(output_file_path = "/app/backend/img/test_workflow.png")
 
 
-# # Augment the LLM with tools
-# tools = [add, multiply]
-# tools_by_name = {tool.name: tool for tool in tools}
-# model_with_tools = model.bind_tools(tools)
-
-# # Step 2: Define state
-
-# from langchain.messages import AnyMessage
-# from typing_extensions import TypedDict, Annotated
-# import operator
+    def weather(self, query: str):
+        """
+        {query} の天気を回答する
+        Args:
+            query (str): 地名
+        """
+        print(f" *****{query}*****")
+        return f"{query}の天気は晴れです"
 
 
-# class MessagesState(TypedDict):
-#     messages: Annotated[list[AnyMessage], operator.add]
-#     llm_calls: int
+    def llm_call(self, state: dict):
+        """
+        LLMを呼び出して、ツールを使用するかどうかを判断する
+        Return:
+            StateMethod:
+                messages: LLMからの応答
+                llm_calls: LLMの呼び出し回数
+        """
+        print(f" ***** llm call *****\n{state}\n")
 
-# # Step 3: Define model node
-# from langchain.messages import SystemMessage
+        messages = [
+            SystemMessage(content="You are a helpful assistant tasked with performing arithmetic on a set of inputs.")
+            ] + state["messages"]
+        response = {
+            "messages": [
+                self.model_with_tools.invoke(
+                    # [
+                    #     SystemMessage(content="You are a helpful assistant tasked with performing arithmetic on a set of inputs.")
+                    # ]
+                    #  + state["messages"]
+                    messages
+                )
+            ],
+            "llm_calls": state.get('llm_calls', 0) + 1
+        }
+        return response
+    
 
-
-# def llm_call(state: dict):
-#     """LLM decides whether to call a tool or not"""
-
-#     messages = [
-#         SystemMessage(content="You are a helpful assistant tasked with performing arithmetic on a set of inputs.")
-#         ] + state["messages"]
-#     print(f"*****\n{messages}\n*****")
-#     response = {
-#         "messages": [
-#             model_with_tools.invoke(
-#                 [
-#                     SystemMessage(
-#                         content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
-#                     )
-#                 ]
-#                 + state["messages"]
-#             )
-#         ],
-#         "llm_calls": state.get('llm_calls', 0) + 1
-#     }
-#     return response
-
-
-# # Step 4: Define tool node
-
-# from langchain.messages import ToolMessage
-
-
-# def tool_node(state: dict):
-#     """Performs the tool call"""
-
-#     result = []
-#     for tool_call in state["messages"][-1].tool_calls:
-#         tool = tools_by_name[tool_call["name"]]
-#         observation = tool.invoke(tool_call["args"])
-#         result.append(ToolMessage(content=f"tool {tool.name} call result: {observation}", tool_call_id=tool_call["id"]))
-#     return {"messages": result}
-
-# # Step 5: Define logic to determine whether to end
-
-# from typing import Literal
-# from langgraph.graph import StateGraph, START, END
+    def tool_node(self, state: dict):
+        """
+        ツールを使用する
+        Return:
+            StateMethod:
+                messages: ツールの実行結果
+                llm_calls: LLMの呼び出し回数 (LLM を呼び出さないため引き継ぎ)
+        """
+        print(f" ***** tool call *****\n{state}\n")
+        result = []
+        for tool_call in state["messages"][-1].tool_calls:
+            tool = self.tools_by_name[tool_call["name"]]
+            result.append(
+                ToolMessage(
+                    content=tool.invoke(tool_call["args"]),
+                    tool_call_id=tool_call["id"],
+                )
+            )
+        return {"messages": result, "llm_calls": state["llm_calls"]}
 
 
-# # Conditional edge function to route to the tool node or end based upon whether the LLM made a tool call
-# def should_continue(state: MessagesState) -> Literal["tool_node", END]:
-#     """Decide if we should continue the loop or stop based upon whether the LLM made a tool call"""
-
-#     messages = state["messages"]
-#     last_message = messages[-1]
-
-#     # If the LLM makes a tool call, then perform an action
-#     if last_message.tool_calls:
-#         return "tool_node"
-
-#     # Otherwise, we stop (reply to the user)
-#     return END
-
-# # Step 6: Build agent
-
-# # Build workflow
-# agent_builder = StateGraph(MessagesState)
-
-# # Add nodes
-# agent_builder.add_node("llm_call", llm_call)
-# agent_builder.add_node("tool_node", tool_node)
-
-# # Add edges to connect nodes
-# agent_builder.add_edge(START, "llm_call")
-# agent_builder.add_conditional_edges(
-#     "llm_call",
-#     should_continue,
-#     ["tool_node", END]
-# )
-# agent_builder.add_edge("tool_node", "llm_call")
-
-# # Compile the agent
-# agent = agent_builder.compile()
+    def should_continue(self, state: dict):
+        """
+        ツールを使用するかどうかを判断する
+        Return:
+            str: "tool_node"
+               or
+            END: END
+        """
+        print(f" ***** ツール使用か否か判断 *****\n")
+        ##essagesの最後の要素がtool_callsを持っているか判断する
+        if state["messages"][-1].tool_calls:
+            return "tool_node"
+        else:
+            return END
 
 
-# # from IPython.display import Image, display
-# # # Show the agent
-# # display(Image(agent.get_graph(xray=True).draw_mermaid_png()))
+    def run(self, input: str):
+        """
+        Agent を実行する
+        Args:
+            input (str): ユーザーの入力
+        """
+        result = self.agent.invoke({"messages": [HumanMessage(content=input)]})
+        print(result)
+        return result
 
-# # Invoke
-# from langchain.messages import HumanMessage
-# messages = [HumanMessage(content="11足す14足す15の答えを教えて。")]
-# messages = agent.invoke({"messages": messages})
-# for m in messages["messages"]:
-#     m.pretty_print()
 
-# # call our graph with streaming to see the steps
-# # for state in agent.stream(messages, stream_mode="values"):
-# #     last_message = state["messages"][-1]
-# #     last_message.pretty_print()
+if __name__ == "__main__":
+    snAgent = snAgent()
+    snAgent.run("こんにちは。今日の東京の天気は？")
