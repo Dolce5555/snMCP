@@ -21,7 +21,7 @@ class WeaviateManageBase:
         self.secrets = secrets
         
         # 外部からロガーが渡されなければモジュールロガーを作成
-        self.logger = logger or self.getLogger(f"{__file__.split("/")[-1]}_{self.__class__.__name__}", logLevel)
+        self.logger = logger.getChild(self.__class__.__name__) or self.getLogger(f"{__file__.split("/")[-1]}_{self.__class__.__name__}", logLevel)
         
         self.client = weaviate.connect_to_local(
             host = secrets["weaviate"]["host"],

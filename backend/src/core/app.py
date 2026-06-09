@@ -15,7 +15,7 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
-    fmt = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+    fmt = "%(asctime)s %(levelname)s [%(filename)s : %(name)s] %(message)s"
     handler.setFormatter(logging.Formatter(fmt))
     logger.addHandler(handler)
     logger.propagate = False
@@ -28,19 +28,19 @@ if __name__ == "__main__":
     # # wdm.insertObject(filePath)
     # wdm.readObjects(fileName)
 
-    # llm = LLMManager("vllm", secrets)
-    # print(llm.manager.invoke("あなたは何を手伝ってくれますか？"))
+    # 外部で依存オブジェクトを初期化
+    llm = LLMManager("vllm", secrets, logger, llmKind="baseLlm")
+    ragSearcher = WeaviateRAGSearcher(secrets, "mariage_docs", logger)
+
+    # パイプラインを初期化（質問文はこの時点では渡さない）
     ragPipeline = RAGPipeline(
-        secrets,
-        logger,
-        """\
-        今、ワタベウェディングで結婚式を挙げようと考えています。\n\
-        もし、タキシードを持ち込もうと考えているのですが、持ち込みにかかる費用について教えてください。""",
-        mode="raw",
+        llm=llm,
+        ragSearcher=ragSearcher,
+        logger=logger,
         pipeline_kind="agent"
-        # pipeline_kind="2steps"
     )
-    ragPipeline.run()
-    # collections = ragPipeline.ragSearcher.client.collections.list_all() # 脱獄用
-    # print(collections) # 脱獄用
-    # print(f"\n\n実際にユーザに返すレスポンス内容\n{ragPipeline.generated_response}")
+    
+    # 実行
+    question = "今、ワタベウェディングで結婚式を挙げようと考えています。\nもし、タキシードを持ち込もうと考えているのですが、持ち込みにかかる費用について教えてください。"
+    response = ragPipeline.run(usr_question=question, mode="raw")
+    print(f"\n最終出力結果:\n{response}")

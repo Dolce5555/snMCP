@@ -29,32 +29,32 @@ services:
     networks:
       - llmApp
 
-  # vllm-cpu:
-  #   build: ./vllmCPU
-  #   container_name: vllmCPU
-  #   volumes:
-  #     - ./vllmCPU:/app/vllm
-  #   working_dir: /app/vllm
-  #   shm_size: '1gb'
-  #   env_file:
-  #     - ./__envs__/vllmCPU.env
-  #   command: --config /app/vllm/configs/embeddinggemma.yaml
-  #   # command: --config /app/vllm/configs/functiongemma.yaml
-  #   # entrypoint: tail -f /dev/null
-  #   networks:
-  #     - llmApp
+  vllm-cpu:
+    build: ./vllmCPU
+    container_name: vllmCPU
+    volumes:
+      - ./vllmCPU:/app/vllm
+    working_dir: /app/vllm
+    shm_size: '1gb'
+    env_file:
+      - ./__envs__/vllmCPU.env
+    command: --config /app/vllm/configs/embeddinggemma.yaml
+    # command: --config /app/vllm/configs/functiongemma.yaml
+    # entrypoint: tail -f /dev/null
+    networks:
+      - llmApp
 
-  # weaviate:
-  #   build: ./weaviate
-  #   container_name: weaviate
-  #   volumes:
-  #     - ./weaviate/data:/app/weaviate/data
-  #   working_dir: /app/weaviate/data
-  #   restart: on-failure:0
-  #   env_file:
-  #     - ./__envs__/weaviate.env
-  #   networks:
-  #     - llmApp
+  weaviate:
+    build: ./weaviate
+    container_name: weaviate
+    volumes:
+      - ./weaviate/data:/app/weaviate/data
+    working_dir: /app/weaviate/data
+    restart: on-failure:0
+    env_file:
+      - ./__envs__/weaviate.env
+    networks:
+      - llmApp
 
   backend:
     build: ./backend
