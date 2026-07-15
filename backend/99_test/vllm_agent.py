@@ -1,6 +1,7 @@
 from langchain_core.tools import StructuredTool
 from langchain.chat_models import init_chat_model
 from langchain.messages import AnyMessage, SystemMessage, ToolMessage, HumanMessage
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, END
 from ruamel.yaml import YAML
 from typing import Literal
@@ -45,7 +46,7 @@ class snAgent():
     def __init__(self):
         # tool を使えるように model を定義
         self.model = model
-        
+        self.memory = MemorySaver()
         # selfがバインドされたメソッドをToolとして登録する
         weather_tool = StructuredTool.from_function(
             func=self.weather,
@@ -69,8 +70,12 @@ class snAgent():
             ["tool_node", END]# should_continueがtool_nodeかENDを返す
         )
         self.agent_builder.add_edge("tool_node", "llm_call")
-        self.agent = self.agent_builder.compile()
-        self.agent.get_graph(xray=True).draw_mermaid_png(output_file_path = "/app/backend/img/test_workflow.png")
+        self.agent = self.agent_builder.compile(checkpointer=self.memory)
+        self.agent.get_graph(xray=True).draw_mermaid_png(
+            output_file_path = "/app/backend/img/test_workflow.png",
+            max_retries = 3,
+            retry_delay = 1,
+        )
 
 
     def weather(self, query: str):
@@ -143,18 +148,20 @@ class snAgent():
         print(f" ***** ツール使用か否か判断 *****\n")
         ##essagesの最後の要素がtool_callsを持っているか判断する
         if state["messages"][-1].tool_calls:
+            print(f" ***** ツールを使用する *****")
             return "tool_node"
         else:
+            print(f" ***** ツールを使用しない *****")
             return END
 
 
-    def run(self, input: str):
+    def run(self, input: str, thread_id: str = "1"):
         """
         Agent を実行する
         Args:
             input (str): ユーザーの入力
         """
-        result = self.agent.invoke({"messages": [HumanMessage(content=input)]})
+        result = self.agent.invoke({"messages": [HumanMessage(content=input)]},{"configurable": {"thread_id": thread_id}})
         print(result)
         return result
 
@@ -162,3 +169,7 @@ class snAgent():
 if __name__ == "__main__":
     snAgent = snAgent()
     snAgent.run("こんにちは。今日の東京の天気は？")
+    # snAgent.run("今日の大阪と東京の天気を比べてみたらどう？")
+    # snAgent.run("博多と長崎の天気は？", thread_id = "2")
+    print(snAgent.memory.get(config = {"configurable": {"thread_id": "1"}})["channel_values"])
+    # print(snAgent.memory.get_state(thread_id = "2"))

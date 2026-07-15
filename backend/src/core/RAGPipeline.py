@@ -2,6 +2,7 @@ from WeaviateManager import WeaviateRAGSearcher
 from langchain.tools import tool
 from langchain_core.tools import StructuredTool
 from langchain.messages import AnyMessage, SystemMessage, ToolMessage, HumanMessage, AIMessage
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, END
 from ruamel.yaml import YAML
 from LLMManager import LLMManager, ChatTemplate
@@ -22,6 +23,7 @@ class BasePipeline(ABC):
         self.logger.info(f"{self.__class__.__name__} を初期化します。")
         self.llm = llm
         self.ragSearcher = ragSearcher
+        self.memory = MemorySaver()
 
     @abstractmethod
     def run(self, usr_question: str, history: dict = None, mode: str = "raw") -> tuple[str, dict]:
@@ -148,7 +150,7 @@ class RAGAgentPipeline(BasePipeline):
             ["tool_node", END]
         )
         workflow.add_edge("tool_node", "llm_node")
-        self.agent = workflow.compile()
+        self.agent = workflow.compile(checkpointer=self.memory)
     
     # Agent のノード
     def _llm_node(self, state: GraphState):
@@ -180,9 +182,11 @@ class RAGAgentPipeline(BasePipeline):
             return END
 
 
-    def run(self, usr_question: str, history: dict = None, mode: str = "raw") -> tuple[str, dict]:
+    def run(self, usr_question: str, mode: str = "raw", thread_id: str = "1") -> tuple[str, dict]:
         self.logger.info(f"ユーザ入力: {usr_question}")
         
+        memory_config = {"configurable": {"thread_id": thread_id}}
+        history = self.memory.get(config = memory_config)
         # 外部から渡された GraphState(history) をベースに、今回の質問を追加して invoke に渡す
         if history is None:
             input_state = {"messages": [HumanMessage(content=usr_question)]}
@@ -193,17 +197,8 @@ class RAGAgentPipeline(BasePipeline):
             input_state["messages"].append(HumanMessage(content=usr_question))
 
         # Agentの実行。更新された状態全体が返る
-        response_state = self.agent.invoke(input_state)
-        
-        # AgentのState(辞書)から、最後のAIMessageを抽出
-        final_message = response_state["messages"][-1]
-        response_content = final_message.content if isinstance(final_message, AIMessage) else str(final_message.content)
-        
-        self.logger.info(f"生成されたレスポンス: {response_content}")
-        
-        # 回答テキストと、更新されたGraphStateの両方を返す
-        return response_content, response_state
-
+        self.agent.invoke(input_state, memory_config)
+        return self.memory.get(config = memory_config)["channel_values"]
 
 ##################################################
 # 動作確認用
@@ -237,16 +232,10 @@ if __name__ == "__main__":
     
     # 実行1回目
     question1 = "今、ワタベウェディングで結婚式を挙げようと考えています。\nもし、タキシードを持ち込もうと考えているのですが、持ち込みにかかる費用について教えてください。"
-    response1, state1 = ragPipeline.run(usr_question=question1, mode="raw")
+    response1 = ragPipeline.run(usr_question=question1, mode="raw")
     print(f"\n最終出力結果 (1回目):\n{response1}")
-    
-    # メモリ（GraphState）の可視化
-    print(f"\n=== GraphState (1回目) ===\n{state1}\n=========================\n")
-    
+
     # 実行2回目 (前回のGraphStateを引き継ぐ)
     question2 = "ドレスの場合はどうですか？"
-    response2, state2 = ragPipeline.run(usr_question=question2, history=state1, mode="raw")
-    print(f"\n最終出力結果 (2回目 - 文脈維持):\n{response2}")
-    
-    # メモリ（GraphState）の可視化
-    print(f"\n=== GraphState (2回目) ===\n{state2}\n=========================\n")
+    response2 = ragPipeline.run(usr_question=question2, mode="raw")
+    print(f"\n最終出力結果 (2回目):\n{response2}")
