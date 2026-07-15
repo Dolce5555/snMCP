@@ -14,11 +14,6 @@ backend/ragOriginalData/
 # DBファイルを排除
 weaviate/data/
 
-# 使っていないコンテナ情報を排除
-mcpo/
-mcpServer/
-deepeval/
-
 # 重い、不必要なデータは排除
 vllmCPU/models/
 vllmGPU/models/
