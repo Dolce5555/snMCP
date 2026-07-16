@@ -41,12 +41,13 @@ class MCPClient:
         )
         await self.session.initialize()
 
-    async def list_tools(self) -> list[str]:
+    async def list_tools(self) -> None:
         """登録ツール名の一覧を返す"""
         if self.session is None:
             raise RuntimeError("connect() を先に呼んでください")
         response = await self.session.list_tools()
-        return [tool.name for tool in response.tools]
+        for tool in response.tools:
+            print(tool.name, tool.description)
 
     async def call_tool(self, name: str, arguments: dict | None = None) -> CallToolResult:
         """ツールを直接実行"""

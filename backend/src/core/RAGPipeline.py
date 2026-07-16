@@ -6,10 +6,12 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, END
 from ruamel.yaml import YAML
 from LLMManager import LLMManager, ChatTemplate
+from MCPClient import MCPClient
 from abc import ABC, abstractmethod
 from typing_extensions import TypedDict, Annotated
 import operator
 import logging
+import asyncio
 
 class BasePipeline(ABC):
     @abstractmethod
@@ -114,26 +116,29 @@ class RAGAgentPipeline(BasePipeline):
 
     def __init__(self, llm: LLMManager, ragSearcher: WeaviateRAGSearcher, logger: logging.Logger):
         super().__init__(llm, ragSearcher, logger)
-        
+
+        self.mcpClient = MCPClient(logger, logLevel=logging.INFO)
+        asyncio.run(self.mcpClient.connect())
         # 使用する tool を定義
-        tools = [
-            StructuredTool.from_function(
-                func=self._rag_search,
-                name="rag_search",
-                description="文書DBから情報を取得する関数",
-            )
-        ]
-        self.tools_by_name = {tool.name: tool for tool in tools}
+        # tools = [
+        #     StructuredTool.from_function(
+        #         func=self._rag_search,
+        #         name="rag_search",
+        #         description="文書DBから情報を取得する関数",
+        #     )
+        # ]
+        tools = self.mcpClient.tools
+        self.tools_by_name = {tool['name']: tool for tool in tools}
         
         # 初期化時にエージェント（ワークフロー）を1回だけコンパイルする
         self._create_agent()
 
     # tool として利用されるメソッド
-    def _rag_search(self, query: Annotated[str, "ユーザの質問から想定される、RAG検索に尤もらしいクエリの推測文字列"]):
-        self.logger.info(f"検索ツールがagentにより呼び出されました。\n検索クエリ: {query}")
-        search_result = self.ragSearcher.contextSearch(query)
-        self.logger.info(f"検索結果: \n{search_result}")
-        return search_result
+    # def _rag_search(self, query: Annotated[str, "ユーザの質問から想定される、RAG検索に尤もらしいクエリの推測文字列"]):
+    #     self.logger.info(f"検索ツールがagentにより呼び出されました。\n検索クエリ: {query}")
+    #     search_result = self.ragSearcher.contextSearch(query)
+    #     self.logger.info(f"検索結果: \n{search_result}")
+    #     return search_result
 
     # Langraph による Agent の workflow の実装
     def _create_agent(self):
@@ -159,16 +164,13 @@ class RAGAgentPipeline(BasePipeline):
         ] + state["messages"]
         return {"messages": [self.llm.invoke(messages)], "llm_calls": state.get("llm_calls", 0) + 1}
 
-    def _tool_node(self, state: GraphState):
+    async def _tool_node(self, state: GraphState):
         result = []
+        await self.mcpClient.connect()
         for tool_call in state["messages"][-1].tool_calls:
-            tool = self.tools_by_name[tool_call["name"]]
-            result.append(
-                ToolMessage(
-                    content=str(tool.invoke(tool_call["args"])),
-                    tool_call_id=tool_call["id"],
-                )
-            )
+            toolRes = await self.mcpClient.session.call_tool(tool_call["name"], tool_call["args"])
+            self.logger.info(f"ツールの実行結果: {toolRes}")
+            result.append(ToolMessage(content=toolRes.content[-1].text, tool_call_id=tool_call["id"]))
         return {"messages": result, "llm_calls": state["llm_calls"]}
 
     ## 分岐の判断エッジ
@@ -197,7 +199,7 @@ class RAGAgentPipeline(BasePipeline):
             input_state["messages"].append(HumanMessage(content=usr_question))
 
         # Agentの実行。更新された状態全体が返る
-        self.agent.invoke(input_state, memory_config)
+        asyncio.run(self.agent.ainvoke(input_state, memory_config))
         return self.memory.get(config = memory_config)["channel_values"]
 
 ##################################################
@@ -231,11 +233,11 @@ if __name__ == "__main__":
     )
     
     # 実行1回目
-    question1 = "今、ワタベウェディングで結婚式を挙げようと考えています。\nもし、タキシードを持ち込もうと考えているのですが、持ち込みにかかる費用について教えてください。"
+    question1 = "今、ワタベウェディングで結婚式を挙げようと考えています。\nもし、タキシードを持ち込もうと考えているのですが、持ち込みにかかる費用について教えてください。情報はRAGに格納しているので、そちらを参照するようにしてください。"
     response1 = ragPipeline.run(usr_question=question1, mode="raw")
     print(f"\n最終出力結果 (1回目):\n{response1}")
 
-    # 実行2回目 (前回のGraphStateを引き継ぐ)
-    question2 = "ドレスの場合はどうですか？"
-    response2 = ragPipeline.run(usr_question=question2, mode="raw")
-    print(f"\n最終出力結果 (2回目):\n{response2}")
+    # # 実行2回目 (前回のGraphStateを引き継ぐ)
+    # question2 = "ドレスの場合はどうですか？"
+    # response2 = ragPipeline.run(usr_question=question2, mode="raw")
+    # print(f"\n最終出力結果 (2回目):\n{response2}")

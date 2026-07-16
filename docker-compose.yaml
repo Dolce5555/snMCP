@@ -71,6 +71,21 @@ services:
   #   weaviate_apikey:
   #     file: ./weaviate/weaviate_apikey.txt
 
+  mcp-server:
+    build: ./backend
+    container_name: mcp-server
+    volumes:
+      - ./backend:/app/backend
+    working_dir: /app/backend/src/mcpserver
+    ports:
+      - 8888:8000
+    env_file:
+      - ./__envs__/backend.env
+    entrypoint: uvicorn MCPServer:app --host 0.0.0.0 --port 8000
+    # entrypoint: tail -f /dev/null
+    networks:
+      - llmApp
+
 networks:
   llmApp:
     driver: bridge
